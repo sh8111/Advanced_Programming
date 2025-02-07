@@ -1,0 +1,7 @@
+Comparison:
+
+Runtime of nbody.py ~ 51.278 seconds
+
+Runtime of nbody_opt.py ~ 6.830 seconds
+
+The optimised code is 7.507 times  faster
