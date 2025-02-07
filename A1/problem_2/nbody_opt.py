@@ -1,20 +1,23 @@
-""" n-body4 - Using data aggregation to reduce loop overheads."""
-
 import time
 
 # Record the start time
 start_time = time.time()
 
 """
-    N-body simulation - Optimization Step 4: Data Aggregation and Loop Optimization
-    - Pre-computed pairs of bodies to avoid redundant calculations
-    - Used tuple unpacking for better performance
-    - Maintained optimizations from steps 1-3
+    N-body simulation - Final Optimized Version
+    Combines all optimizations:
+    - Reduced function call overhead
+    - Optimized membership testing
+    - Used local variables
+    - Data aggregation and loop optimization
+    - Pre-computed pairs
+    - Improved tuple unpacking
 """
 
 from itertools import combinations
 
 def initialize_bodies():
+    """Initialize the bodies with their positions, velocities, and masses."""
     PI = 3.14159265358979323
     SOLAR_MASS = 4 * PI * PI
     DAYS_PER_YEAR = 365.24
@@ -35,18 +38,19 @@ def initialize_bodies():
                     5.15138902046611451e-05 * SOLAR_MASS)
     }
 
-def advance(bodies, body_pairs, dt):
-    '''
-        advance the system one timestep
-    '''
-    for (body1, body2) in body_pairs:
+def advance(bodies, pairs, dt):
+    """Advance the system one timestep."""
+    for (body1, body2) in pairs:
+        # Local references for better performance
         ([x1, y1, z1], v1, m1) = bodies[body1]
         ([x2, y2, z2], v2, m2) = bodies[body2]
         
+        # Position deltas
         dx = x1-x2
         dy = y1-y2
         dz = z1-z2
         
+        # Update velocities
         mag = dt * ((dx * dx + dy * dy + dz * dz) ** (-1.5))
         b1 = m2 * mag
         b2 = m1 * mag
@@ -58,16 +62,18 @@ def advance(bodies, body_pairs, dt):
         v2[1] += dy * b2
         v2[2] += dz * b2
     
+    # Update positions
     for body, (r, [vx, vy, vz], m) in bodies.items():
         r[0] += dt * vx
         r[1] += dt * vy
         r[2] += dt * vz
 
-def report_energy(bodies, body_pairs, e=0.0):
-    '''
-        compute the energy and return it so that it can be printed
-    '''
-    for (body1, body2) in body_pairs:
+def report_energy(bodies, pairs):
+    """Calculate and return the system's energy."""
+    e = 0.0
+    
+    # Calculate potential energy
+    for (body1, body2) in pairs:
         ((x1, y1, z1), v1, m1) = bodies[body1]
         ((x2, y2, z2), v2, m2) = bodies[body2]
         
@@ -77,39 +83,46 @@ def report_energy(bodies, body_pairs, e=0.0):
         
         e -= (m1 * m2) / ((dx * dx + dy * dy + dz * dz) ** 0.5)
     
+    # Add kinetic energy
     for body, (r, [vx, vy, vz], m) in bodies.items():
         e += m * (vx * vx + vy * vy + vz * vz) / 2.
+    
     return e
 
-def offset_momentum(bodies, ref, px=0.0, py=0.0, pz=0.0):
-    '''
-        ref is the body in the center of the system
-        offset values from this reference
-    '''
+def offset_momentum(bodies, ref):
+    """Offset the system's momentum relative to the referenced body."""
+    px = py = pz = 0.0
+    
     for body, (r, [vx, vy, vz], m) in bodies.items():
         px -= vx * m
         py -= vy * m
         pz -= vz * m
-        
+    
+    # Update reference body's velocity
     (r, v, m) = bodies[ref]
     v[0] = px / m
     v[1] = py / m
     v[2] = pz / m
 
-def nbody(loops, reference, iterations):
-    '''
-        nbody simulation
-        loops - number of loops to run
-        reference - body at center of system
-        iterations - number of timesteps to advance
-    '''
+def nbody(loops, reference='sun', iterations=20000):
+    """
+    Run nbody simulation.
+    
+    Args:
+        loops: Number of loops to run
+        reference: Body at center of system (default: 'sun')
+        iterations: Number of timesteps to advance (default: 20000)
+    """
+    # Initialize system
     bodies = initialize_bodies()
     
-    # Pre-compute body pairs
+    # Pre-compute body pairs for optimization
     body_pairs = list(combinations(bodies.keys(), 2))
     
+    # Offset momentum relative to sun
     offset_momentum(bodies, reference)
-
+    
+    # Run simulation
     for _ in range(loops):
         report_energy(bodies, body_pairs)
         for _ in range(iterations):
@@ -117,13 +130,13 @@ def nbody(loops, reference, iterations):
         print(report_energy(bodies, body_pairs))
 
 if __name__ == '__main__':
-    nbody(100, 'sun', 20000)
+    nbody(100)  # Run simulation with default parameters
 
 # Record the end time
 end_time = time.time()
 
 # Calculate the elapsed time
-elapsed_time = end_time - start_time
+finaltime = end_time - start_time
 
 # Print the elapsed time
-print(f"Elapsed time: {elapsed_time} seconds")
+print(f"Elapsed time: {finaltime} seconds")
